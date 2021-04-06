@@ -84,6 +84,48 @@ struct Sphere : public Intersectable {
 	}
 };
 
+struct GoldObject : public Intersectable {
+
+	GoldObject() {
+		vec3 n(0.17, 0.35, 1.5); vec3 kappa(3.1, 2.7, 1.9);
+		material = new ReflectiveMaterial(n, kappa);
+	}
+
+	Hit intersect(const Ray& ray) {
+		Hit hit;
+
+		float a = pow(ray.dir.x, 2) + pow(ray.dir.y, 2);
+		float b = 2 * ray.start.x * ray.dir.x + 2 * ray.start.y * ray.dir.y - ray.dir.z;
+		float c = pow(ray.start.x, 2) + pow(ray.start.y, 2) - ray.start.z;
+		float discr = b * b - 4.0f * a * c;
+		if (discr < 0) return hit;
+		float sqrt_discr = sqrtf(discr);
+		float t1 = (-b + sqrt_discr) / 2.0f / a;	// t1 >= t2 for sure
+		float t2 = (-b - sqrt_discr) / 2.0f / a;
+		if (t1 <= 0) return hit;
+
+		if (t2 > 0 && insideSphere(ray.start + ray.dir * t2)) {
+			hit.t = t2;
+		}
+		else if(insideSphere(ray.start + ray.dir * t1)){
+			hit.t = t1;
+		}
+		else {
+			return hit; // nincsenek benne a 0.3 sugaru korben
+		}
+		//hit.t = (t2 > 0) ? t2 : t1;
+		hit.position = ray.start + ray.dir * hit.t;
+		vec3 gradient = vec3(2 * hit.position.x, 2 * hit.position.y, -hit.position.z);
+		hit.normal = normalize(gradient);
+		hit.material = material;
+		return hit;
+	}
+	bool insideSphere(vec3 point) {
+		if (sqrt(pow(point.x, 2) + pow(point.y, 2) + pow(point.z, 2)) < 0.3f) return true;
+		return false;
+	}
+};
+
 class Camera {
 	vec3 eye, lookat, right, up;
 public:
@@ -136,10 +178,11 @@ public:
 		Material* material2 = new ReflectiveMaterial(n, kappa);
 	
 		objects.push_back(new Sphere(vec3(0.0f,0.0f, 0.0f), 0.2f, material2));
-		objects.push_back(new Sphere(vec3(0.4f,0.2f, 0.0f), 0.2f, material1));
-		objects.push_back(new Sphere(vec3(0.4f,-0.2f, 0.0f), 0.2f, material1));
-		objects.push_back(new Sphere(vec3(-0.4f,0.2f, 0.0f), 0.2f, material1));
-		//objects.push_back(new Sphere(vec3(2.0f,2.0f, 2.0f), 0.2f, material1));
+		//objects.push_back(new GoldObject());
+		objects.push_back(new Sphere(vec3(0.6f,0.2f, 0.0f), 0.2f, material1));
+		objects.push_back(new Sphere(vec3(0.6f,-0.2f, 0.0f), 0.2f, material1));
+		objects.push_back(new Sphere(vec3(0.6f,0.0f, 1.5f), 0.2f, material1));
+		objects.push_back(new Sphere(vec3(2.0f,2.0f, 2.0f), 0.2f, material1));
 		objects.push_back(new Sphere(vec3(0.1f,0.5f, 2.0f), 0.4f, material1));
 
 	}
