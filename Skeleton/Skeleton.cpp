@@ -118,7 +118,9 @@ struct GoldObject : public Intersectable {
 		}
 		//hit.t = (t2 > 0) ? t2 : t1;
 		hit.position = ray.start + ray.dir * hit.t;
-		vec3 gradient = vec3(2 * hit.position.x * aParam, 2 * hit.position.y * bParam, -cParam);
+
+		float tmp = exp(aParam * pow(hit.position.x, 2) + bParam * pow(hit.position.y, 2) - cParam * hit.position.z);
+		vec3 gradient = vec3( tmp * 2 * hit.position.x * aParam, tmp * 2 * hit.position.y * bParam, -cParam * tmp);
 		hit.normal = normalize(gradient);
 		hit.material = material;
 		return hit;
@@ -183,9 +185,9 @@ public:
 		//objects.push_back(new Sphere(vec3(0.0f,0.0f, 0.0f), 0.2f, material2));
 		objects.push_back(new GoldObject(1.0f, 1.0f, 1.0f));
 		objects.push_back(new Sphere(vec3(0.6f,0.2f, 0.0f), 0.2f, material1));
-		objects.push_back(new Sphere(vec3(0.6f,-0.2f, 0.0f), 0.2f, material2));
+		objects.push_back(new Sphere(vec3(0.6f,-0.2f, 0.0f), 0.2f, material1));
 		objects.push_back(new Sphere(vec3(0.6f,0.0f, 1.5f), 0.2f, material1));
-		objects.push_back(new Sphere(vec3(2.0f,2.0f, 2.0f), 0.2f, material1));
+		objects.push_back(new Sphere(vec3(1.0f,1.0f, 2.0f), 0.2f, material1));
 		objects.push_back(new Sphere(vec3(0.1f,0.5f, 2.0f), 0.4f, material1));
 
 	}
