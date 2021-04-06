@@ -137,6 +137,10 @@ public:
 	
 		objects.push_back(new Sphere(vec3(0.0f,0.0f, 0.0f), 0.2f, material2));
 		objects.push_back(new Sphere(vec3(0.4f,0.2f, 0.0f), 0.2f, material1));
+		objects.push_back(new Sphere(vec3(0.4f,-0.2f, 0.0f), 0.2f, material1));
+		objects.push_back(new Sphere(vec3(-0.4f,0.2f, 0.0f), 0.2f, material1));
+		//objects.push_back(new Sphere(vec3(2.0f,2.0f, 2.0f), 0.2f, material1));
+		objects.push_back(new Sphere(vec3(0.1f,0.5f, 2.0f), 0.4f, material1));
 
 	}
 
