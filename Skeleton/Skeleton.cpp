@@ -85,8 +85,11 @@ struct Sphere : public Intersectable {
 };
 
 struct GoldObject : public Intersectable {
-
-	GoldObject() {
+	float aParam, bParam, cParam;
+	GoldObject(float aParam, float bParam, float cParam) {
+		this->aParam = aParam;
+		this->bParam = bParam;
+		this->cParam = cParam;
 		vec3 n(0.17, 0.35, 1.5); vec3 kappa(3.1, 2.7, 1.9);
 		material = new ReflectiveMaterial(n, kappa);
 	}
@@ -94,9 +97,9 @@ struct GoldObject : public Intersectable {
 	Hit intersect(const Ray& ray) {
 		Hit hit;
 
-		float a = pow(ray.dir.x, 2) + pow(ray.dir.y, 2);
-		float b = 2 * ray.start.x * ray.dir.x + 2 * ray.start.y * ray.dir.y - ray.dir.z;
-		float c = pow(ray.start.x, 2) + pow(ray.start.y, 2) - ray.start.z;
+		float a = aParam * pow(ray.dir.x, 2) + bParam * pow(ray.dir.y, 2);
+		float b = 2 * aParam * ray.start.x * ray.dir.x + 2 * bParam * ray.start.y * ray.dir.y - cParam * ray.dir.z;
+		float c = aParam * pow(ray.start.x, 2) + bParam * pow(ray.start.y, 2) - cParam * ray.start.z;
 		float discr = b * b - 4.0f * a * c;
 		if (discr < 0) return hit;
 		float sqrt_discr = sqrtf(discr);
@@ -115,7 +118,7 @@ struct GoldObject : public Intersectable {
 		}
 		//hit.t = (t2 > 0) ? t2 : t1;
 		hit.position = ray.start + ray.dir * hit.t;
-		vec3 gradient = vec3(2 * hit.position.x, 2 * hit.position.y, -1);
+		vec3 gradient = vec3(2 * hit.position.x * aParam, 2 * hit.position.y * bParam, -cParam);
 		hit.normal = normalize(gradient);
 		hit.material = material;
 		return hit;
@@ -178,7 +181,7 @@ public:
 		Material* material2 = new ReflectiveMaterial(n, kappa);
 	
 		//objects.push_back(new Sphere(vec3(0.0f,0.0f, 0.0f), 0.2f, material2));
-		objects.push_back(new GoldObject());
+		objects.push_back(new GoldObject(1.0f, 1.0f, 1.0f));
 		objects.push_back(new Sphere(vec3(0.6f,0.2f, 0.0f), 0.2f, material1));
 		objects.push_back(new Sphere(vec3(0.6f,-0.2f, 0.0f), 0.2f, material2));
 		objects.push_back(new Sphere(vec3(0.6f,0.0f, 1.5f), 0.2f, material1));
