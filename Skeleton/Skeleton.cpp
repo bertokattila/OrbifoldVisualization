@@ -173,6 +173,7 @@ const float epsilon = 0.0001f;
 class Scene {
 	std::vector<Intersectable*> objects;
 	std::vector<Light*> lights;
+	std::vector<PointLight*> pointLights;
 	Camera camera;
 	vec3 La;
 public:
@@ -183,7 +184,10 @@ public:
 
 		La = vec3(0.4f, 0.4f, 0.4f);
 		vec3 lightDirection(1, 1, 1), Le(2, 2, 2);
-		lights.push_back(new Light(lightDirection, Le));
+		//lights.push_back(new Light(lightDirection, Le));
+
+		vec3 position(-1, -1, 2), LePoint(2, 2, 2);
+		pointLights.push_back(new PointLight(position, LePoint));
 
 		vec3 kd(0.3f, 0.2f, 0.1f), ks(2, 2, 2);
 		Material* material1 = new RoughMaterial(kd, ks, 50);
@@ -225,8 +229,13 @@ public:
 		for (Intersectable* object : objects) if (object->intersect(ray).t > 0) return true;
 		return false;
 	}
-	bool shadowIntersectPointLight(Ray ray) {	// pontszeru fenyforrasra
-		for (Intersectable* object : objects) if (object->intersect(ray).t > 0) return true;
+	bool shadowIntersectPointLight(Ray ray, float dist) {	// pontszeru fenyforrasra
+		for (Intersectable* object : objects) { // ha elobb utkozik valamilyen mas objektumba, akkor az takarja a lampat
+			float t = object->intersect(ray).t;
+			if (t > 0 && length(ray.start + ray.dir * t) < dist) { // abban az iranyvban van, es kozelebb, mint a lampa
+				return true;
+			}
+		}
 		return false;
 	}
 
@@ -236,7 +245,7 @@ public:
 		if (hit.t < 0) return La;
 		vec3 outRadiance = hit.material->ka * La;
 		if (hit.material->type == ROUGH) {
-			for (Light* light : lights) {
+			for (Light* light : lights) { 
 				Ray shadowRay(hit.position + hit.normal * epsilon, light->direction);
 				float cosTheta = dot(hit.normal, light->direction);
 				if (cosTheta > 0 && !shadowIntersect(shadowRay)) {	// shadow computation
@@ -246,6 +255,23 @@ public:
 					if (cosDelta > 0) outRadiance = outRadiance + light->Le * hit.material->ks * powf(cosDelta, hit.material->shininess);
 				}
 			}
+			
+				for (PointLight* pointLight : pointLights) { // pontszeru lampakra
+					vec3 lightVector = normalize( pointLight->location - hit.position); // a feluletrol a pontszeru lapaba mutato vektor normalizaltja
+					float distanceFromPointLight = length(pointLight->location - hit.position); // tavolsag a lampatol (fenyerosseg negyzetesen csokken)
+					Ray shadowRay(hit.position + hit.normal * epsilon, lightVector);
+					float cosTheta = dot(hit.normal, lightVector);
+					if (cosTheta > 0 && !shadowIntersectPointLight(shadowRay, distanceFromPointLight)) {	// shadow computation
+						vec3 Le = pointLight->Le * (1.0f / pow(distanceFromPointLight, 2)); // forditottan aranyos a tavolsag negyzetevel
+						outRadiance = outRadiance + Le * hit.material->kd * cosTheta; // diffuz
+
+						vec3 halfway = normalize(-ray.dir + lightVector); //csillogas
+						float cosDelta = dot(hit.normal, halfway);
+						if (cosDelta > 0) outRadiance = outRadiance + Le * hit.material->ks * powf(cosDelta, hit.material->shininess);
+					}
+				}
+
+
 		}
 		if (hit.material->type == REFLECTIVE) {
 			vec3 reflectedDir = ray.dir - hit.normal * dot(hit.normal, ray.dir) * 2.0f;
