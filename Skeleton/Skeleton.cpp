@@ -157,6 +157,15 @@ struct Light {
 	}
 };
 
+struct PointLight {
+	vec3 location;
+	vec3 Le;
+	PointLight(vec3 _location, vec3 _Le) {
+		location = normalize(_location);
+		Le = _Le;
+	}
+};
+
 float rnd() { return (float)rand() / RAND_MAX; }
 
 const float epsilon = 0.0001f;
@@ -213,6 +222,10 @@ public:
 	}
 
 	bool shadowIntersect(Ray ray) {	// for directional lights
+		for (Intersectable* object : objects) if (object->intersect(ray).t > 0) return true;
+		return false;
+	}
+	bool shadowIntersectPointLight(Ray ray) {	// pontszeru fenyforrasra
 		for (Intersectable* object : objects) if (object->intersect(ray).t > 0) return true;
 		return false;
 	}
