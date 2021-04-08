@@ -121,7 +121,12 @@ struct GoldObject : public Intersectable {
 
 		float tmp = exp(aParam * pow(hit.position.x, 2) + bParam * pow(hit.position.y, 2) - cParam * hit.position.z);
 		vec3 gradient = vec3( tmp * 2 * hit.position.x * aParam, tmp * 2 * hit.position.y * bParam, -cParam * tmp);
-		hit.normal = normalize(gradient);
+		//vec3 normal2 = normalize(vec3(-2 * aParam * hit.position.x / cParam, -2 * bParam * hit.position.y / cParam, 1));
+		hit.normal = -normalize(gradient);
+		//printf("n: %f %f %f\n", hit.normal.x, hit.normal.y, hit.normal.z);
+		//printf("n2: %f %f %f\n", normal2.x, normal2.y, normal2.z);
+
+
 		hit.material = material;
 		return hit;
 	}
@@ -129,6 +134,71 @@ struct GoldObject : public Intersectable {
 		if (sqrt(pow(point.x, 2) + pow(point.y, 2) + pow(point.z, 2)) < 0.3f) return true;
 		return false;
 	}
+};
+
+struct Face {
+	vec3 points[5];
+	vec3 normal;
+};
+
+struct Dodecahedron : Intersectable{
+	Face faces[12];
+	Dodecahedron() {
+		std::vector<vec3> objVertices;
+		objVertices.push_back(vec3(0, 0.618, 1.618));
+		objVertices.push_back(vec3(0, -0.618, 1.618));
+		objVertices.push_back(vec3(0, -0.618, -1.618));
+		objVertices.push_back(vec3(0, 0.618, -1.618));
+
+		objVertices.push_back(vec3(1.618, 0, 0.618));
+		objVertices.push_back(vec3(-1.618, 0, 0.618));
+		objVertices.push_back(vec3(-1.618, 0, -0.618));
+		objVertices.push_back(vec3(1.618, 0, -0.618));
+
+		objVertices.push_back(vec3(0.618, 1.618, 0));
+		objVertices.push_back(vec3(-0.618, 1.618, 0));
+		objVertices.push_back(vec3(-0.618, -1.618, 0));
+		objVertices.push_back(vec3(0.618, -1.618, 0));
+
+		objVertices.push_back(vec3(1, 1, 1));
+		objVertices.push_back(vec3(-1, 1, 1));
+		objVertices.push_back(vec3(-1, -1, 1));
+		objVertices.push_back(vec3(1, -1, 1));
+
+		objVertices.push_back(vec3(1, -1, -1));
+		objVertices.push_back(vec3(1, 1, -1));
+		objVertices.push_back(vec3(-1, 1, -1));
+		objVertices.push_back(vec3(-1, -1, -1));
+
+		int indexes[12][5] = {	{1, 2, 16, 5, 13}, // egyes lapokhoz tartozo csucsok indexei (+1)
+								{1, 13, 9, 10, 14},
+								{1, 14, 6, 15, 2},
+								{2, 15, 11, 12, 16},
+								{3, 4, 18, 8, 17},
+								{3, 17, 12, 11, 20},
+								{3, 20, 7, 19, 4},
+								{19, 10, 9, 18, 4},
+								{16, 12, 17, 8, 5},
+								{5, 8, 18, 9, 13},
+								{14, 10, 19, 7, 6},
+								{6, 7, 20, 11, 15} };
+
+		for (int i = 0; i < 12; i++)
+		{
+			Face tmpFace;
+			for (int j = 0; j < 5; j++)
+			{
+				tmpFace.points[0] = objVertices.at(indexes[i][j] - 1);
+			}
+			faces[i] = tmpFace;
+		}
+	}
+
+	Hit intersect(const Ray& ray) {
+		Hit hit;
+		return hit;
+	}
+
 };
 
 class Camera {
@@ -197,6 +267,10 @@ public:
 	
 		//objects.push_back(new Sphere(vec3(0.0f,0.0f, 0.0f), 0.2f, material2));
 		objects.push_back(new GoldObject(1.0f, 1.0f, 1.0f));
+
+
+		objects.push_back(new Dodecahedron());
+
 		objects.push_back(new Sphere(vec3(0.6f,0.2f, 0.0f), 0.2f, material1));
 		objects.push_back(new Sphere(vec3(0.6f,-0.2f, 0.0f), 0.2f, material1));
 		objects.push_back(new Sphere(vec3(0.6f,0.0f, 1.5f), 0.2f, material1));
