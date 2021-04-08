@@ -138,7 +138,9 @@ struct GoldObject : public Intersectable {
 
 struct Face {
 	vec3 points[5];
-	vec3 normal;
+	vec3 normal() {
+		return normalize(cross(points[1] - points[0], points[2]-points[0])); // a sik ket vektorananak veszem a skalaris szorzatat es normalizalom
+	}
 };
 
 struct Dodecahedron : Intersectable{
@@ -188,15 +190,28 @@ struct Dodecahedron : Intersectable{
 			Face tmpFace;
 			for (int j = 0; j < 5; j++)
 			{
-				tmpFace.points[0] = objVertices.at(indexes[i][j] - 1);
+				tmpFace.points[j] = objVertices.at(indexes[i][j] - 1);
 			}
 			faces[i] = tmpFace;
 		}
+		printFaces();
 	}
 
 	Hit intersect(const Ray& ray) {
 		Hit hit;
 		return hit;
+	}
+	void printFaces() {
+		for (int i = 0; i < 12; i++)
+		{
+			vec3 normal = faces[i].normal();
+			printf("\ni: %f normal %f %f %f\n", (float)i, normal.x, normal.y, normal.z);
+			for (int j = 0; j < 5; j++)
+			{
+				printf("point: %f x: %f y: %f z: %f\n", (float)j + 1, faces[i].points[j].x, faces[i].points[j].y, faces[i].points[j].z);
+
+			}
+		}
 	}
 
 };
@@ -248,7 +263,7 @@ class Scene {
 	vec3 La;
 public:
 	void build() {
-		vec3 eye = vec3(0, 0, 2), vup = vec3(0, 1, 0), lookat = vec3(0, 0, 0);
+		vec3 eye = vec3(0, 0, 1), vup = vec3(0, 1, 0), lookat = vec3(0, 0, 0);
 		float fov = 45 * M_PI / 180;
 		camera.set(eye, lookat, vup, fov);
 
