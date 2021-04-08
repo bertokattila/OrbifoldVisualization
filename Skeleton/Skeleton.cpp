@@ -218,18 +218,27 @@ struct Dodecahedron : Intersectable{
 
 class Camera {
 	vec3 eye, lookat, right, up;
+	float fov;
 public:
 	void set(vec3 _eye, vec3 _lookat, vec3 vup, float fov) {
 		eye = _eye;
 		lookat = _lookat;
 		vec3 w = eye - lookat;
 		float focus = length(w);
+		this->fov = fov;
 		right = normalize(cross(vup, w)) * focus * tanf(fov / 2);
 		up = normalize(cross(w, right)) * focus * tanf(fov / 2);
 	}
 	Ray getRay(int X, int Y) {
 		vec3 dir = lookat + right * (2.0f * (X + 0.5f) / windowWidth - 1) + up * (2.0f * (Y + 0.5f) / windowHeight - 1) - eye;
 		return Ray(eye, dir);
+	}
+	void Animate(float dt) {
+		vec3 d = eye - lookat;
+		printf("eye x %f y %f z %f\n", eye.x, eye.y, eye.z);
+		eye = vec3(d.x * cos(dt) + d.z * sin(dt), d.y, -d.x * sin(dt) + d.z * cos(dt)) + lookat;
+		printf(" eye x %f y %f z %f\n", eye.x, eye.y, eye.z);
+		set(eye, lookat, up, fov);
 	}
 };
 
@@ -262,6 +271,9 @@ class Scene {
 	Camera camera;
 	vec3 La;
 public:
+	void animate(float dt) {
+		camera.Animate(dt);
+	}
 	void build() {
 		vec3 eye = vec3(0, 0, 1), vup = vec3(0, 1, 0), lookat = vec3(0, 0, 0);
 		float fov = 45 * M_PI / 180;
@@ -407,11 +419,13 @@ const char* fragmentSource = R"(
 
 class FullScreenTexturedQuad {
 	unsigned int vao;	// vertex array object id and texture id
-	Texture texture;
+	
+	int windowWidth, windowHeight;
 public:
-	FullScreenTexturedQuad(int windowWidth, int windowHeight, std::vector<vec4>& image)
-		: texture(windowWidth, windowHeight, image)
+	FullScreenTexturedQuad(int windowWidth, int windowHeight)
 	{
+		this->windowWidth = windowWidth;
+		this->windowHeight = windowHeight;
 		glGenVertexArrays(1, &vao);	// create 1 vertex array object
 		glBindVertexArray(vao);		// make it active
 
@@ -426,7 +440,8 @@ public:
 		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, NULL);     // stride and offset: it is tightly packed
 	}
 
-	void Draw() {
+	void Draw(std::vector<vec4>& image){
+		Texture texture(windowWidth, windowHeight, image);
 		glBindVertexArray(vao);	// make the vao and its vbos active playing the role of the data source
 		gpuProgram.setUniform(texture, "textureUnit");
 		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);	// draw two triangles forming a quad
@@ -440,14 +455,14 @@ void onInitialization() {
 	glViewport(0, 0, windowWidth, windowHeight);
 	scene.build();
 
-	std::vector<vec4> image(windowWidth * windowHeight);
-	long timeStart = glutGet(GLUT_ELAPSED_TIME);
-	scene.render(image);
-	long timeEnd = glutGet(GLUT_ELAPSED_TIME);
-	printf("Rendering time: %d milliseconds\n", (timeEnd - timeStart));
+	
+	//long timeStart = glutGet(GLUT_ELAPSED_TIME);
+	
+	//long timeEnd = glutGet(GLUT_ELAPSED_TIME);
+	//printf("Rendering time: %d milliseconds\n", (timeEnd - timeStart));
 
 	// copy image to GPU as a texture
-	fullScreenTexturedQuad = new FullScreenTexturedQuad(windowWidth, windowHeight, image);
+	fullScreenTexturedQuad = new FullScreenTexturedQuad(windowWidth, windowHeight);
 
 	// create program for the GPU
 	gpuProgram.create(vertexSource, fragmentSource, "fragmentColor");
@@ -455,7 +470,9 @@ void onInitialization() {
 
 // Window has become invalid: Redraw
 void onDisplay() {
-	fullScreenTexturedQuad->Draw();
+	std::vector<vec4> image(windowWidth * windowHeight);
+	scene.render(image);
+	fullScreenTexturedQuad->Draw(image);
 	glutSwapBuffers();									// exchange the two buffers
 }
 
@@ -470,6 +487,9 @@ void onKeyboardUp(unsigned char key, int pX, int pY) {
 
 // Mouse click event
 void onMouse(int button, int state, int pX, int pY) {
+	if(state == 0) scene.animate(0.1f);
+	
+	glutPostRedisplay();
 }
 
 // Move mouse with key pressed
@@ -478,4 +498,7 @@ void onMouseMotion(int pX, int pY) {
 
 // Idle event indicating that some time elapsed: do animation here
 void onIdle() {
+	scene.animate(0.1f);
+
+	glutPostRedisplay();
 }
