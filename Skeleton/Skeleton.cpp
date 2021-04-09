@@ -139,7 +139,7 @@ struct GoldObject : public Intersectable {
 struct Face {
 	vec3 points[5];
 	vec3 normal() {
-		return normalize(cross(points[1] - points[0], points[2]-points[0])); // a sik ket vektorananak veszem a skalaris szorzatat es normalizalom
+		return -normalize(cross(points[1] - points[0], points[2]-points[0])); // a sik ket vektorananak veszem a skalaris szorzatat es normalizalom
 	}
 };
 
@@ -275,7 +275,12 @@ struct Dodecahedron : Intersectable{
 			hit.position = ray.start + ray.dir * hit.t;
 			hit.normal = faces[bestFaceIndex].normal();
 			hit.material = material;
-			if (bestFaceIndex == 2) hit.material = material2;
+			if (closestSideDistance(bestFaceIndex, hit.position) > 0.1) {
+				hit.material = material2;
+			}
+			
+			//if (bestFaceIndex == 2) hit.material = material2;
+			//printf("dist %f\n", distanceFromLine(hit.position, faces[bestFaceIndex].points[0], faces[bestFaceIndex].points[1]));
 			/*if (bestFaceIndex == 2) hit.material = material3;
 			if (bestFaceIndex == 3) hit.material = material4;
 			if (bestFaceIndex == 4) hit.material = material5;
@@ -304,6 +309,22 @@ struct Dodecahedron : Intersectable{
 
 			}
 		}
+	}
+
+	float distanceFromLine(vec3 point, vec3 linePoint1, vec3 linePoint2) {
+		return length(cross((linePoint2 - linePoint1), (linePoint1 - point))) / length(linePoint2 - linePoint1);
+	}
+	float closestSideDistance(int faceIndex, vec3 point) {
+		float dist = -1;
+		for (int i = 0; i < 4; i++) // elso negy egyenes
+		{
+			float tmpDist = distanceFromLine(point, faces[faceIndex].points[i], faces[faceIndex].points[i + 1]);
+			if (tmpDist < dist || dist < 0) dist = tmpDist;
+		}
+		// otodik egyenes
+		float tmpDist = distanceFromLine(point, faces[faceIndex].points[4], faces[faceIndex].points[5]);
+		if (tmpDist < dist || dist < 0) dist = tmpDist;
+		return dist;
 	}
 
 };
