@@ -145,7 +145,58 @@ struct Face {
 
 struct Dodecahedron : Intersectable{
 	Face faces[12];
+	Material* material2;
+	Material* material3;
+	Material* material4;
+	Material* material5;
+	Material* material6;
+	Material* material7;
+	Material* material8;
+	Material* material9;
+	Material* material10;
+	Material* material11;
+	Material* material12;
+	Material* material13;
 	Dodecahedron() {
+		vec3 kd(0.1f, 0.5f, 0.2f), ks(2, 2, 2);
+		material = new RoughMaterial(kd, ks, 50);
+
+		vec3 kd2(0.5f, 0.2f, 0.2f), ks2(2, 2, 2);
+		material2 = new RoughMaterial(kd2, ks2, 50);
+
+		vec3 kd3(0.5f, 0.5f, 0.2f), ks3(2, 2, 2);
+		material3 = new RoughMaterial(kd3, ks3, 50);
+
+		vec3 kd4(0.5f, 0.2f, 0.5f), ks4(2, 2, 2);
+		material4 = new RoughMaterial(kd4, ks4, 50);
+
+		vec3 kd5(0.5f, 0.2f, 0.9f), ks5(2, 2, 2);
+		material5 = new RoughMaterial(kd5, ks5, 50);
+
+		vec3 kd6(0.1f, 0.4f, 0.2f), ks6(2, 2, 2);
+		material6 = new RoughMaterial(kd6, ks6, 50);
+
+		vec3 kd7(0.1f, 0.2f, 0.6f), ks7(2, 2, 2);
+		material7 = new RoughMaterial(kd7, ks7, 50);
+
+		vec3 kd8(0.5f, 0.5f, 0.5f), ks8(2, 2, 2);
+		material8 = new RoughMaterial(kd8, ks8, 50);
+
+		vec3 kd9(0.2f, 0.6f, 0.2f), ks9(2, 2, 2);
+		material9 = new RoughMaterial(kd9, ks9, 50);
+
+		vec3 kd10(0.5f, 0.8f, 0.2f), ks10(2, 2, 2);
+		material10 = new RoughMaterial(kd10, ks10, 50);
+
+		vec3 kd11(0.8f, 0.1f, 0.3f), ks11(2, 2, 2);
+		material11 = new RoughMaterial(kd11, ks11, 50);
+
+		vec3 kd12(0.9f, 0.6f, 0.2f), ks12(2, 2, 2);
+		material12 = new RoughMaterial(kd12, ks12, 50);
+
+		vec3 kd13(0.9f, 0.7f, 0.5f), ks13(2, 2, 2);
+		material13 = new RoughMaterial(kd13, ks13, 50);
+
 		std::vector<vec3> objVertices;
 		objVertices.push_back(vec3(0, 0.618, 1.618));
 		objVertices.push_back(vec3(0, -0.618, 1.618));
@@ -194,11 +245,50 @@ struct Dodecahedron : Intersectable{
 			}
 			faces[i] = tmpFace;
 		}
+		
 		printFaces();
 	}
 
 	Hit intersect(const Ray& ray) {
 		Hit hit;
+
+		int bestFaceIndex = 0;
+		float smallestPositiveT = -1;
+		for (int i = 0; i < 12; i++)
+		{
+			float nx = faces[i].normal().x;
+			float ny = faces[i].normal().y;
+			float nz = faces[i].normal().z;
+			float x0 = faces[i].points[0].x;
+			float y0 = faces[i].points[0].y;
+			float z0 = faces[i].points[0].z;
+			float t = (nx * x0 + ny * y0 + nz * z0 - nx * ray.start.x - ny * ray.start.y - nz * ray.start.z) / (nx * ray.dir.x + ny * ray.dir.y + nz * ray.dir.z);
+			if (t > 0 && (smallestPositiveT < 0 || smallestPositiveT > t)) {
+				smallestPositiveT = t;
+				bestFaceIndex = i;
+			}
+		}
+		if (smallestPositiveT > 0) {
+			hit.t = smallestPositiveT;
+			hit.position = ray.start + ray.dir * hit.t;
+			hit.normal = faces[bestFaceIndex].normal();
+			hit.material = material;
+			if (bestFaceIndex == 1) hit.material = material2;
+			if (bestFaceIndex == 2) hit.material = material3;
+			if (bestFaceIndex == 3) hit.material = material4;
+			if (bestFaceIndex == 4) hit.material = material5;
+			if (bestFaceIndex == 5) hit.material = material6;
+			if (bestFaceIndex == 6) hit.material = material7;
+			if (bestFaceIndex == 7) hit.material = material8;
+			if (bestFaceIndex == 8) hit.material = material9;
+			if (bestFaceIndex == 9) hit.material = material10;
+			if (bestFaceIndex == 10) hit.material = material11;
+			if (bestFaceIndex == 11) hit.material = material12;
+			if (bestFaceIndex == 12) hit.material = material13;
+			
+		}
+		//printf("hit %f face %f\n", hit.t, (float)bestFaceIndex);
+
 		return hit;
 	}
 	void printFaces() {
@@ -281,10 +371,10 @@ public:
 
 		La = vec3(0.4f, 0.4f, 0.4f);
 		vec3 lightDirection(1, 1, 1), Le(2, 2, 2);
-		//lights.push_back(new Light(lightDirection, Le));
+		lights.push_back(new Light(lightDirection, Le));
 
-		vec3 position(-1, -1, 2), LePoint(2, 2, 2);
-		pointLights.push_back(new PointLight(position, LePoint));
+		vec3 position(0, 0.1, 0.1), LePoint(2, 2, 2);
+		//pointLights.push_back(new PointLight(position, LePoint));
 
 		vec3 kd(0.3f, 0.2f, 0.1f), ks(2, 2, 2);
 		Material* material1 = new RoughMaterial(kd, ks, 50);
@@ -293,17 +383,19 @@ public:
 		Material* material2 = new ReflectiveMaterial(n, kappa);
 	
 		//objects.push_back(new Sphere(vec3(0.0f,0.0f, 0.0f), 0.2f, material2));
-		objects.push_back(new GoldObject(1.0f, 1.0f, 1.0f));
+	
 
 
 		objects.push_back(new Dodecahedron());
 
+		/*objects.push_back(new GoldObject(1.0f, 1.0f, 1.0f));
 		objects.push_back(new Sphere(vec3(0.6f,0.2f, 0.0f), 0.2f, material1));
 		objects.push_back(new Sphere(vec3(0.6f,-0.2f, 0.0f), 0.2f, material1));
 		objects.push_back(new Sphere(vec3(0.6f,0.0f, 1.5f), 0.2f, material1));
 		objects.push_back(new Sphere(vec3(1.0f,1.0f, 2.0f), 0.2f, material1));
 		objects.push_back(new Sphere(vec3(0.1f,0.5f, 2.0f), 0.4f, material1));
-
+		*/
+		
 	}
 
 	void render(std::vector<vec4>& image) {
@@ -498,7 +590,7 @@ void onMouseMotion(int pX, int pY) {
 
 // Idle event indicating that some time elapsed: do animation here
 void onIdle() {
-	scene.animate(0.1f);
+	//scene.animate(0.1f);
 
-	glutPostRedisplay();
+	//glutPostRedisplay();
 }
