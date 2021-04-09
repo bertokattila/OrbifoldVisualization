@@ -158,8 +158,8 @@ struct Dodecahedron : Intersectable{
 	Material* material12;
 	Material* material13;
 	Dodecahedron() {
-		vec3 kd(0.1f, 0.5f, 0.2f), ks(2, 2, 2);
-		material = new RoughMaterial(kd, ks, 50);
+		vec3 kd(0.73f, 0.82f, 0.65f), ks(2, 2, 2);
+		material = new RoughMaterial(kd, ks, 10);
 
 		vec3 kd2(0.5f, 0.2f, 0.2f), ks2(2, 2, 2);
 		material2 = new RoughMaterial(kd2, ks2, 50);
@@ -273,7 +273,7 @@ struct Dodecahedron : Intersectable{
 			hit.position = ray.start + ray.dir * hit.t;
 			hit.normal = faces[bestFaceIndex].normal();
 			hit.material = material;
-			if (bestFaceIndex == 1) hit.material = material2;
+			/*if (bestFaceIndex == 1) hit.material = material2;
 			if (bestFaceIndex == 2) hit.material = material3;
 			if (bestFaceIndex == 3) hit.material = material4;
 			if (bestFaceIndex == 4) hit.material = material5;
@@ -285,7 +285,7 @@ struct Dodecahedron : Intersectable{
 			if (bestFaceIndex == 10) hit.material = material11;
 			if (bestFaceIndex == 11) hit.material = material12;
 			if (bestFaceIndex == 12) hit.material = material13;
-			
+			*/
 		}
 		//printf("hit %f face %f\n", hit.t, (float)bestFaceIndex);
 
@@ -345,14 +345,14 @@ struct PointLight {
 	vec3 location;
 	vec3 Le;
 	PointLight(vec3 _location, vec3 _Le) {
-		location = normalize(_location);
+		this->location = _location;
 		Le = _Le;
 	}
 };
 
 float rnd() { return (float)rand() / RAND_MAX; }
 
-const float epsilon = 0.0001f;
+const float epsilon = 0.01f;
 
 class Scene {
 	std::vector<Intersectable*> objects;
@@ -365,16 +365,16 @@ public:
 		camera.Animate(dt);
 	}
 	void build() {
-		vec3 eye = vec3(0, 0, 1), vup = vec3(0, 1, 0), lookat = vec3(0, 0, 0);
+		vec3 eye = vec3(0, 0, 1.3), vup = vec3(0, 1, 0), lookat = vec3(0, 0, 0);
 		float fov = 45 * M_PI / 180;
 		camera.set(eye, lookat, vup, fov);
 
-		La = vec3(0.4f, 0.4f, 0.4f);
+		La = vec3(0.1f, 0.1f, 0.1f);
 		vec3 lightDirection(1, 1, 1), Le(2, 2, 2);
-		lights.push_back(new Light(lightDirection, Le));
+		//lights.push_back(new Light(lightDirection, Le));
 
-		vec3 position(0, 0.1, 0.1), LePoint(2, 2, 2);
-		//pointLights.push_back(new PointLight(position, LePoint));
+		vec3 position(0, 0.6, 0), LePoint(0.5, 0.5, 0.5);
+		pointLights.push_back(new PointLight(position, LePoint));
 
 		vec3 kd(0.3f, 0.2f, 0.1f), ks(2, 2, 2);
 		Material* material1 = new RoughMaterial(kd, ks, 50);
@@ -388,9 +388,12 @@ public:
 
 		objects.push_back(new Dodecahedron());
 
-		/*objects.push_back(new GoldObject(1.0f, 1.0f, 1.0f));
-		objects.push_back(new Sphere(vec3(0.6f,0.2f, 0.0f), 0.2f, material1));
-		objects.push_back(new Sphere(vec3(0.6f,-0.2f, 0.0f), 0.2f, material1));
+		objects.push_back(new GoldObject(1.0f, 1.0f, 1.0f));
+		//objects.push_back(new Sphere(vec3(0.0f,0.0f, -2.0f), 0.2f, material1));
+		//objects.push_back(new Sphere(vec3(2.0f, 0.0f, 0.0f), 0.2f, material1));
+		//objects.push_back(new Sphere(vec3(-2.0f, 0.0f, 0.0f), 0.2f, material1));
+		//objects.push_back(new Sphere(vec3(0.0f, 0.0f, 2.0f), 0.2f, material1));
+		/*objects.push_back(new Sphere(vec3(0.6f,-0.2f, 0.0f), 0.2f, material1));
 		objects.push_back(new Sphere(vec3(0.6f,0.0f, 1.5f), 0.2f, material1));
 		objects.push_back(new Sphere(vec3(1.0f,1.0f, 2.0f), 0.2f, material1));
 		objects.push_back(new Sphere(vec3(0.1f,0.5f, 2.0f), 0.4f, material1));
@@ -423,8 +426,11 @@ public:
 		return false;
 	}
 	bool shadowIntersectPointLight(Ray ray, float dist) {	// pontszeru fenyforrasra
+
+		
 		for (Intersectable* object : objects) { // ha elobb utkozik valamilyen mas objektumba, akkor az takarja a lampat
 			float t = object->intersect(ray).t;
+			printf("dist %f  tdist %f\n", dist, length(ray.start + ray.dir * t));
 			if (t > 0 && length(ray.start + ray.dir * t) < dist) { // abban az iranyvban van, es kozelebb, mint a lampa
 				return true;
 			}
@@ -450,11 +456,15 @@ public:
 			}
 			
 				for (PointLight* pointLight : pointLights) { // pontszeru lampakra
-					vec3 lightVector = normalize( pointLight->location - hit.position); // a feluletrol a pontszeru lapaba mutato vektor normalizaltja
+					vec3 lightVector = normalize( pointLight->location - hit.position); // a feluletrol a pontszeru lampaba mutato vektor normalizaltja
 					float distanceFromPointLight = length(pointLight->location - hit.position); // tavolsag a lampatol (fenyerosseg negyzetesen csokken)
 					Ray shadowRay(hit.position + hit.normal * epsilon, lightVector);
+
+
+					Hit shadowHit = firstIntersect(shadowRay);
+
 					float cosTheta = dot(hit.normal, lightVector);
-					if (cosTheta > 0 && !shadowIntersectPointLight(shadowRay, distanceFromPointLight)) {	// shadow computation
+					if (cosTheta > 0 && (shadowHit.t < 0 || shadowHit.t > distanceFromPointLight)) {	// shadow computation
 						vec3 Le = pointLight->Le * (1.0f / pow(distanceFromPointLight, 2)); // forditottan aranyos a tavolsag negyzetevel
 						outRadiance = outRadiance + Le * hit.material->kd * cosTheta; // diffuz
 
