@@ -9,8 +9,11 @@ struct Material {
 	float  shininess;
 	vec3 F0;
 	MaterialType type;
+	bool portalMaterial;
+	vec3 pentagonCenter; /// portalos visszaverodes szamitasnal van ra szukseg
 	Material(MaterialType t) {
 		type = t;
+		pentagonCenter = vec3(0, 0, 0);
 	}
 };
 
@@ -20,6 +23,7 @@ struct RoughMaterial : Material {
 		kd = _kd;
 		ks = _ks; 
 		shininess = _shininess;
+		portalMaterial = false;
 	}
 };
 
@@ -29,9 +33,10 @@ vec3 operator/(vec3 num, vec3 denum) {
 }
 struct ReflectiveMaterial : Material
 {
-	ReflectiveMaterial(vec3 n, vec3 kappa) : Material(REFLECTIVE) {
+	ReflectiveMaterial(vec3 n, vec3 kappa, bool isPolral) : Material(REFLECTIVE) {
 		vec3 one(1, 1, 1);
 		F0 = ((n - one) * (n - one) + kappa * kappa) / ((n + one) * (n + one) + kappa * kappa);
+		portalMaterial = isPolral;
 	}
 };
 
@@ -91,14 +96,14 @@ struct GoldObject : public Intersectable {
 		this->bParam = bParam;
 		this->cParam = cParam;
 		vec3 n(0.17, 0.35, 1.5); vec3 kappa(3.1, 2.7, 1.9);
-		material = new ReflectiveMaterial(n, kappa);
+		material = new ReflectiveMaterial(n, kappa, false);
 	}
 
 	Hit intersect(const Ray& ray) {
 		Hit hit;
 
 		float a = aParam * pow(ray.dir.x, 2) + bParam * pow(ray.dir.y, 2);
-		float b = 2 * aParam * ray.start.x * ray.dir.x + 2 * bParam * ray.start.y * ray.dir.y - cParam * ray.dir.z;
+		float b = 2.0f * aParam * ray.start.x * ray.dir.x + 2.0f * bParam * ray.start.y * ray.dir.y - cParam * ray.dir.z;
 		float c = aParam * pow(ray.start.x, 2) + bParam * pow(ray.start.y, 2) - cParam * ray.start.z;
 		float discr = b * b - 4.0f * a * c;
 		if (discr < 0) return hit;
@@ -107,7 +112,7 @@ struct GoldObject : public Intersectable {
 		float t2 = (-b - sqrt_discr) / 2.0f / a;
 		if (t1 <= 0) return hit;
 
-		if (t2 > 0 && insideSphere(ray.start + ray.dir * t2)) {
+		if (insideSphere(ray.start + ray.dir * t2)) {
 			hit.t = t2;
 		}
 		else if(insideSphere(ray.start + ray.dir * t1)){
@@ -122,6 +127,7 @@ struct GoldObject : public Intersectable {
 		float tmp = exp(aParam * pow(hit.position.x, 2) + bParam * pow(hit.position.y, 2) - cParam * hit.position.z);
 		vec3 gradient = vec3( tmp * 2 * hit.position.x * aParam, tmp * 2 * hit.position.y * bParam, -cParam * tmp);
 		//vec3 normal2 = normalize(vec3(-2 * aParam * hit.position.x / cParam, -2 * bParam * hit.position.y / cParam, 1));
+
 		hit.normal = -normalize(gradient);
 		//printf("n: %f %f %f\n", hit.normal.x, hit.normal.y, hit.normal.z);
 		//printf("n2: %f %f %f\n", normal2.x, normal2.y, normal2.z);
@@ -129,6 +135,7 @@ struct GoldObject : public Intersectable {
 
 		hit.material = material;
 		return hit;
+	
 	}
 	bool insideSphere(vec3 point) {
 		if (sqrt(pow(point.x, 2) + pow(point.y, 2) + pow(point.z, 2)) < 0.3f) return true;
@@ -164,7 +171,7 @@ struct Dodecahedron : Intersectable{
 		
 
 		vec3 n(1, 1, 1); vec3 kappa(10, 10, 10);
-		material2 = new ReflectiveMaterial(n, kappa);
+		material2 = new ReflectiveMaterial(n, kappa, true);
 
 		vec3 kd3(0.5f, 0.5f, 0.2f), ks3(2, 2, 2);
 		material3 = new RoughMaterial(kd3, ks3, 50);
@@ -248,8 +255,10 @@ struct Dodecahedron : Intersectable{
 			faces[i] = tmpFace;
 		}
 		
-		printFaces();
+		//printFaces();
 	}
+
+
 
 	Hit intersect(const Ray& ray) {
 		Hit hit;
@@ -264,7 +273,7 @@ struct Dodecahedron : Intersectable{
 			float x0 = faces[i].points[0].x;
 			float y0 = faces[i].points[0].y;
 			float z0 = faces[i].points[0].z;
-			float t = (nx * x0 + ny * y0 + nz * z0 - nx * ray.start.x - ny * ray.start.y - nz * ray.start.z) / (nx * ray.dir.x + ny * ray.dir.y + nz * ray.dir.z);
+			float t = (nx * x0 + ny * y0 + nz * z0 - nx * ray.start.x - ny * ray.start.y - nz * ray.start.z) / (nx * ray.dir.x + ny * ray.dir.y + nz * ray.dir.z); 
 			if (t > 0 && (smallestPositiveT < 0 || smallestPositiveT > t)) {
 				smallestPositiveT = t;
 				bestFaceIndex = i;
@@ -275,8 +284,17 @@ struct Dodecahedron : Intersectable{
 			hit.position = ray.start + ray.dir * hit.t;
 			hit.normal = faces[bestFaceIndex].normal();
 			hit.material = material;
-			if (closestSideDistance(bestFaceIndex, hit.position) > 0.1) {
+			if (closestSideDistance(bestFaceIndex, hit.position) > 0.05) {
+				vec3 pentagonCenter = vec3(0, 0, 0); // sulypont lesz a kozeppont
+				for (int i = 0; i < 5; i++)
+				{
+					pentagonCenter = pentagonCenter + faces[bestFaceIndex].points[i];
+				}
+				pentagonCenter = pentagonCenter / 5.0f;
+		
 				hit.material = material2;
+				hit.material->pentagonCenter = pentagonCenter;
+
 			}
 			
 			//if (bestFaceIndex == 2) hit.material = material2;
@@ -322,7 +340,7 @@ struct Dodecahedron : Intersectable{
 			if (tmpDist < dist || dist < 0) dist = tmpDist;
 		}
 		// otodik egyenes
-		float tmpDist = distanceFromLine(point, faces[faceIndex].points[4], faces[faceIndex].points[5]);
+		float tmpDist = distanceFromLine(point, faces[faceIndex].points[0], faces[faceIndex].points[4]);
 		if (tmpDist < dist || dist < 0) dist = tmpDist;
 		return dist;
 	}
@@ -348,9 +366,9 @@ public:
 	}
 	void Animate(float dt) {
 		vec3 d = eye - lookat;
-		printf("eye x %f y %f z %f\n", eye.x, eye.y, eye.z);
+		//printf("eye x %f y %f z %f\n", eye.x, eye.y, eye.z);
 		eye = vec3(d.x * cos(dt) + d.z * sin(dt), d.y, -d.x * sin(dt) + d.z * cos(dt)) + lookat;
-		printf(" eye x %f y %f z %f\n", eye.x, eye.y, eye.z);
+		//printf(" eye x %f y %f z %f\n", eye.x, eye.y, eye.z);
 		set(eye, lookat, up, fov);
 	}
 };
@@ -403,7 +421,7 @@ public:
 		Material* material1 = new RoughMaterial(kd, ks, 50);
 
 		vec3 n(0.17, 0.35, 1.5); vec3 kappa(3.1, 2.7, 1.9);
-		Material* material2 = new ReflectiveMaterial(n, kappa);
+		Material* material2 = new ReflectiveMaterial(n, kappa, false);
 	
 		//objects.push_back(new Sphere(vec3(0.0f,0.0f, 0.0f), 0.2f, material2));
 	
@@ -411,7 +429,7 @@ public:
 
 		objects.push_back(new Dodecahedron());
 
-		objects.push_back(new GoldObject(1.0f, 1.0f, 1.0f));
+		objects.push_back(new GoldObject(5.0f, 5.0f, 1.0f));
 		//objects.push_back(new Sphere(vec3(0.0f,0.0f, -2.0f), 0.2f, material1));
 		//objects.push_back(new Sphere(vec3(2.0f, 0.0f, 0.0f), 0.2f, material1));
 		//objects.push_back(new Sphere(vec3(-2.0f, 0.0f, 0.0f), 0.2f, material1));
@@ -454,7 +472,23 @@ public:
 		return false;
 	}
 
-	vec3 trace(Ray ray, int depth = 0) {
+	vec3 rotatePoint(vec3 pointToRotate, vec3 rotationAxisNormal, vec3 pentagonCenter) {
+		pointToRotate = pointToRotate - pentagonCenter; // eltolom az otszoget az origoba, ugy, hogy a kozeppontja legyen a (0,0,0) pontban
+		float sinTheta = sin(0.4 * M_PI); // 72 fok radianban 0.4pi
+		float cosTheta = cos(0.4 * M_PI);
+		vec3 rotated = (pointToRotate * cosTheta) + (cross(rotationAxisNormal, pointToRotate) * sinTheta) + (rotationAxisNormal * dot(rotationAxisNormal, pointToRotate)) * (1 - cosTheta);
+		rotated = rotated + pentagonCenter; // visszatoljuk a helyere
+		return rotated;
+	}
+	vec3 rotateVector(vec3 pointToRotate, vec3 rotationAxisNormal) { // vektornal nincsen szukseg eltolasra, az az origobol mutat amugy is
+		float sinTheta = sin(0.4 * M_PI); // 72 fok radianban 0.4pi
+		float cosTheta = cos(0.4 * M_PI);
+		vec3 rotated = (pointToRotate * cosTheta) + (cross(rotationAxisNormal, pointToRotate) * sinTheta) + (rotationAxisNormal * dot(rotationAxisNormal, pointToRotate)) * (1 - cosTheta);
+		return rotated;
+	}
+
+
+	vec3 trace(Ray ray, int depth = 0, int portalDepth = 0) {
 		if (depth > 5) return La;
 		Hit hit = firstIntersect(ray);
 		if (hit.t < 0) return La;
@@ -490,11 +524,24 @@ public:
 
 		}
 		if (hit.material->type == REFLECTIVE) {
-			vec3 reflectedDir = ray.dir - hit.normal * dot(hit.normal, ray.dir) * 2.0f;
-			float cosa = -dot(ray.dir, hit.normal);
-			vec3 one(1, 1, 1);
-			vec3 F = hit.material->F0 + (one - hit.material->F0) * pow(1 - cosa, 5);
-			outRadiance = outRadiance + F * trace(Ray(hit.position + hit.normal * epsilon, reflectedDir), depth + 1);
+			if (hit.material->portalMaterial) {
+				vec3 reflectedDir = ray.dir - hit.normal * dot(hit.normal, ray.dir) * 2.0f;
+				float cosa = -dot(ray.dir, hit.normal);
+				vec3 one(1, 1, 1);
+				vec3 F = hit.material->F0 + (one - hit.material->F0) * pow(1 - cosa, 5);
+
+				vec3 newStartPoint = rotatePoint(hit.position, hit.normal, hit.material->pentagonCenter);
+				vec3 newDirection = rotateVector(reflectedDir, hit.normal);
+				outRadiance = outRadiance + F * trace(Ray(newStartPoint + hit.normal * epsilon, newDirection), depth + 1);
+			}
+			else {
+				vec3 reflectedDir = ray.dir - hit.normal * dot(hit.normal, ray.dir) * 2.0f;
+				float cosa = -dot(ray.dir, hit.normal);
+				vec3 one(1, 1, 1);
+				vec3 F = hit.material->F0 + (one - hit.material->F0) * pow(1 - cosa, 5);
+				outRadiance = outRadiance + F * trace(Ray(hit.position + hit.normal * epsilon, reflectedDir), depth + 1);
+			}
+				
 		}
 
 		return outRadiance;
