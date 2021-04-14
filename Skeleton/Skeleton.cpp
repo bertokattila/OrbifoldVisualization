@@ -281,8 +281,8 @@ public:
 		camera.Animate(dt);
 	}
 	void build() {
-		vec3 eye = vec3(0, 0, 1.3), vup = vec3(1, 1, 1), lookat = vec3(0, 0, 0);
-		float fov = 55 * M_PI / 180;
+		vec3 eye = vec3(0, 0, 1.3), vup = vec3(0, 1, 0), lookat = vec3(0, 0, 0);
+		float fov = 45 * M_PI / 180;
 		camera.set(eye, lookat, vup, fov);
 		La = vec3(0.1f, 0.1f, 0.1f);
 
