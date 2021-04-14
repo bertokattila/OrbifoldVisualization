@@ -281,7 +281,7 @@ public:
 		camera.Animate(dt);
 	}
 	void build() {
-		vec3 eye = vec3(0, 0, 1.3), vup = vec3(0, 1, 0), lookat = vec3(0, 0, 0);
+		vec3 eye = vec3(1.140857, 0, -0.623253), vup = vec3(0, 1, 0), lookat = vec3(0, 0, 0);
 		float fov = 45 * M_PI / 180;
 		camera.set(eye, lookat, vup, fov);
 		La = vec3(0.1f, 0.1f, 0.1f);
@@ -290,7 +290,7 @@ public:
 		pointLights.push_back(new PointLight(position, LePoint));
 
 		objects.push_back(new Dodecahedron());
-		objects.push_back(new GoldObject(12.0f, 12.0f, 1.0f));
+		objects.push_back(new GoldObject(10.5f, 10.5f, 1.5f));
 	}
 
 	void render(std::vector<vec4>& image) {
