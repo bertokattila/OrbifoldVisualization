@@ -38,7 +38,7 @@ struct Material {
 	vec3 F0;
 	MaterialType type;
 	bool portalMaterial;
-	vec3 pentagonCenter; /// portalos visszaverodes szamitasnal van ra szukseg
+	vec3 pentagonCenter;
 	Material(MaterialType t) {
 		type = t;
 		pentagonCenter = vec3(0, 0, 0);
@@ -104,7 +104,7 @@ struct GoldObject : public Intersectable {
 		float discr = b * b - 4.0f * a * c;
 		if (discr < 0) return hit;
 		float sqrt_discr = sqrtf(discr);
-		float t1 = (-b + sqrt_discr) / 2.0f / a;	// t1 >= t2 for sure
+		float t1 = (-b + sqrt_discr) / 2.0f / a;
 		float t2 = (-b - sqrt_discr) / 2.0f / a;
 		if (t1 <= 0) return hit;
 
@@ -115,7 +115,7 @@ struct GoldObject : public Intersectable {
 			hit.t = t1;
 		}
 		else {
-			return hit; // nincsenek benne a 0.3 sugaru korben
+			return hit;
 		}
 		hit.position = ray.start + ray.dir * hit.t;
 
@@ -134,7 +134,7 @@ struct GoldObject : public Intersectable {
 struct Face {
 	vec3 points[5];
 	vec3 normal() {
-		return -normalize(cross(points[1] - points[0], points[2]-points[0])); // a sik ket vektorananak veszem a skalaris szorzatat es normalizalom
+		return -normalize(cross(points[1] - points[0], points[2]-points[0]));
 	}
 };
 
@@ -143,33 +143,24 @@ struct Dodecahedron : Intersectable{
 	Material* material2;
 	Dodecahedron() {
 		vec3 kd(0.73f, 0.82f, 0.65f), ks(2, 2, 2);
-		material = new RoughMaterial(kd, ks, 100); // a szeleknek a diffuz annyaga
+		material = new RoughMaterial(kd, ks, 100);
 
 		vec3 n(1, 1, 1); vec3 kappa(10, 10, 10);
-		material2 = new ReflectiveMaterial(n, kappa, true); // tokeletes tukor
+		material2 = new ReflectiveMaterial(n, kappa, true);
 
 		std::vector<vec3> objVertices;
-		objVertices.push_back(vec3(0, 0.618, 1.618));
-		objVertices.push_back(vec3(0, -0.618, 1.618));
-		objVertices.push_back(vec3(0, -0.618, -1.618));
-		objVertices.push_back(vec3(0, 0.618, -1.618));
-		objVertices.push_back(vec3(1.618, 0, 0.618));
-		objVertices.push_back(vec3(-1.618, 0, 0.618));
-		objVertices.push_back(vec3(-1.618, 0, -0.618));
-		objVertices.push_back(vec3(1.618, 0, -0.618));
-		objVertices.push_back(vec3(0.618, 1.618, 0));
-		objVertices.push_back(vec3(-0.618, 1.618, 0));
-		objVertices.push_back(vec3(-0.618, -1.618, 0));
-		objVertices.push_back(vec3(0.618, -1.618, 0));
-		objVertices.push_back(vec3(1, 1, 1));
-		objVertices.push_back(vec3(-1, 1, 1));
-		objVertices.push_back(vec3(-1, -1, 1));
-		objVertices.push_back(vec3(1, -1, 1));
-		objVertices.push_back(vec3(1, -1, -1));
-		objVertices.push_back(vec3(1, 1, -1));
-		objVertices.push_back(vec3(-1, 1, -1));
-		objVertices.push_back(vec3(-1, -1, -1));
-		int indexes[12][5] = {	{1, 2, 16, 5, 13}, // egyes lapokhoz tartozo csucsok indexei (+1)
+		objVertices.push_back(vec3(0, 0.618, 1.618));	 objVertices.push_back(vec3(0, -0.618, 1.618));
+		objVertices.push_back(vec3(0, -0.618, -1.618));	 objVertices.push_back(vec3(0, 0.618, -1.618));
+		objVertices.push_back(vec3(1.618, 0, 0.618));	 objVertices.push_back(vec3(-1.618, 0, 0.618));
+		objVertices.push_back(vec3(-1.618, 0, -0.618));	 objVertices.push_back(vec3(1.618, 0, -0.618));
+		objVertices.push_back(vec3(0.618, 1.618, 0));	 objVertices.push_back(vec3(-0.618, 1.618, 0));
+		objVertices.push_back(vec3(-0.618, -1.618, 0));  objVertices.push_back(vec3(0.618, -1.618, 0));
+		objVertices.push_back(vec3(1, 1, 1));			 objVertices.push_back(vec3(-1, 1, 1));
+		objVertices.push_back(vec3(-1, -1, 1));			 objVertices.push_back(vec3(1, -1, 1));
+		objVertices.push_back(vec3(1, -1, -1));			 objVertices.push_back(vec3(1, 1, -1));
+		objVertices.push_back(vec3(-1, 1, -1));			 objVertices.push_back(vec3(-1, -1, -1));
+		
+		int indexes[12][5] = {	{1, 2, 16, 5, 13}, 
 								{1, 13, 9, 10, 14},
 								{1, 14, 6, 15, 2},
 								{2, 15, 11, 12, 16},
@@ -217,7 +208,7 @@ struct Dodecahedron : Intersectable{
 			hit.normal = faces[bestFaceIndex].normal();
 			hit.material = material;
 			if (closestSideDistance(bestFaceIndex, hit.position) > 0.1) {
-				vec3 pentagonCenter = vec3(0, 0, 0); // sulypont lesz a kozeppont
+				vec3 pentagonCenter = vec3(0, 0, 0);
 				for (int i = 0; i < 5; i++)
 				{
 					pentagonCenter = pentagonCenter + faces[bestFaceIndex].points[i];
@@ -234,12 +225,12 @@ struct Dodecahedron : Intersectable{
 	}
 	float closestSideDistance(int faceIndex, vec3 point) {
 		float dist = -1;
-		for (int i = 0; i < 4; i++) // elso negy egyenes
+		for (int i = 0; i < 4; i++)
 		{
 			float tmpDist = distanceFromLine(point, faces[faceIndex].points[i], faces[faceIndex].points[i + 1]);
 			if (tmpDist < dist || dist < 0) dist = tmpDist;
 		}
-		float tmpDist = distanceFromLine(point, faces[faceIndex].points[0], faces[faceIndex].points[4]); // otodik egyenes
+		float tmpDist = distanceFromLine(point, faces[faceIndex].points[0], faces[faceIndex].points[4]);
 		if (tmpDist < dist || dist < 0) dist = tmpDist;
 		return dist;
 	}
@@ -278,7 +269,6 @@ struct PointLight {
 	}
 };
 
-float rnd() { return (float)rand() / RAND_MAX; }
 const float epsilon = 0.01f;
 
 class Scene {
@@ -291,8 +281,8 @@ public:
 		camera.Animate(dt);
 	}
 	void build() {
-		vec3 eye = vec3(0, 0, 1.3), vup = vec3(0, 1, 0), lookat = vec3(0, 0, 0);
-		float fov = 45 * M_PI / 180;
+		vec3 eye = vec3(0, 0, 1.3), vup = vec3(1, 1, 1), lookat = vec3(0, 0, 0);
+		float fov = 55 * M_PI / 180;
 		camera.set(eye, lookat, vup, fov);
 		La = vec3(0.1f, 0.1f, 0.1f);
 
@@ -300,7 +290,7 @@ public:
 		pointLights.push_back(new PointLight(position, LePoint));
 
 		objects.push_back(new Dodecahedron());
-		objects.push_back(new GoldObject(5.0f, 5.0f, 5.0f));
+		objects.push_back(new GoldObject(12.0f, 12.0f, 1.0f));
 	}
 
 	void render(std::vector<vec4>& image) {
@@ -316,48 +306,49 @@ public:
 	Hit firstIntersect(Ray ray) {
 		Hit bestHit;
 		for (Intersectable* object : objects) {
-			Hit hit = object->intersect(ray); //  hit.t < 0 if no intersection
+			Hit hit = object->intersect(ray);
 			if (hit.t > 0 && (bestHit.t < 0 || hit.t < bestHit.t))  bestHit = hit;
 		}
 		if (dot(ray.dir, bestHit.normal) > 0) bestHit.normal = bestHit.normal * (-1);
 		return bestHit;
 	}
-	bool shadowIntersectPointLight(Ray ray, float dist) {	// pontszeru fenyforrasra
+	bool shadowIntersectPointLight(Ray ray, float dist) {
 		Hit shadowHit = firstIntersect(ray);
 		if ((shadowHit.t < 0 || shadowHit.t > dist)) return true;
 		return false;
 	}
 
 	vec3 rotatePoint(vec3 pointToRotate, vec3 rotationAxisNormal, vec3 pentagonCenter) {
-		pointToRotate = pointToRotate - pentagonCenter; // eltolom az otszoget az origoba, ugy, hogy a kozeppontja legyen a (0,0,0) pontban
-		float sinTheta = sin(0.4 * M_PI); // 72 fok radianban 0.4pi
+		pointToRotate = pointToRotate - pentagonCenter;
+		float sinTheta = sin(0.4 * M_PI);
 		float cosTheta = cos(0.4 * M_PI);
+		// forras: sajat a kod, de az egyszerusege miatt a Rodrigues' rotation formulat implementaltam az eloadason tanult kvaternios megoldas helyett, aminek a mukodesenek tobb oldalon olvastam utana, pl.: https://en.wikipedia.org/wiki/Rodrigues%27_rotation_formula
 		vec3 rotated = (pointToRotate * cosTheta) + (cross(rotationAxisNormal, pointToRotate) * sinTheta) + (rotationAxisNormal * dot(rotationAxisNormal, pointToRotate)) * (1 - cosTheta);
-		rotated = rotated + pentagonCenter; // visszatoljuk a helyere
+		rotated = rotated + pentagonCenter;
 		return rotated;
 	}
-	vec3 rotateVector(vec3 pointToRotate, vec3 rotationAxisNormal) { // vektornal nincsen szukseg eltolasra, az az origobol mutat amugy is
-		float sinTheta = sin(0.4 * M_PI); // 72 fok radianban 0.4pi
+	vec3 rotateVector(vec3 pointToRotate, vec3 rotationAxisNormal) {
+		float sinTheta = sin(0.4 * M_PI);
 		float cosTheta = cos(0.4 * M_PI);
 		vec3 rotated = (pointToRotate * cosTheta) + (cross(rotationAxisNormal, pointToRotate) * sinTheta) + (rotationAxisNormal * dot(rotationAxisNormal, pointToRotate)) * (1 - cosTheta);
 		return rotated;
 	}
 	vec3 trace(Ray ray, int depth = 0, int portalDepth = 0) {
 		if (depth > 5) return La;
-		if (portalDepth > 5) return La; // portal atlepeseket kulon kezelem
+		if (portalDepth > 5) return La;
 		Hit hit = firstIntersect(ray);
 		if (hit.t < 0) return La;
 		vec3 outRadiance = hit.material->ka * La;
 		if (hit.material->type == ROUGH) {
-				for (PointLight* pointLight : pointLights) { // pontszeru lampakra
-					vec3 lightVector = normalize( pointLight->location - hit.position); // a feluletrol a pontszeru lampaba mutato vektor normalizaltja
-					float distanceFromPointLight = length(pointLight->location - hit.position); // tavolsag a lampatol (fenyerosseg negyzetesen csokken)
+				for (PointLight* pointLight : pointLights) { 
+					vec3 lightVector = normalize( pointLight->location - hit.position); 
+					float distanceFromPointLight = length(pointLight->location - hit.position); 
 					Ray shadowRay(hit.position + hit.normal * epsilon, lightVector);
 					float cosTheta = dot(hit.normal, lightVector);
-					if (cosTheta > 0 && shadowIntersectPointLight(shadowRay, distanceFromPointLight)) {	// shadow computation
-						vec3 Le = pointLight->Le * (1.0f / pow(distanceFromPointLight, 2)); // forditottan aranyos a tavolsag negyzetevel
-						outRadiance = outRadiance + Le * hit.material->kd * cosTheta; // diffuz
-						vec3 halfway = normalize(-ray.dir + lightVector); //csillogas
+					if (cosTheta > 0 && shadowIntersectPointLight(shadowRay, distanceFromPointLight)) {	
+						vec3 Le = pointLight->Le * (1.0f / pow(distanceFromPointLight, 2));
+						outRadiance = outRadiance + Le * hit.material->kd * cosTheta; 
+						vec3 halfway = normalize(-ray.dir + lightVector); 
 						float cosDelta = dot(hit.normal, halfway);
 						if (cosDelta > 0) outRadiance = outRadiance + Le * hit.material->ks * powf(cosDelta, hit.material->shininess);
 					}
@@ -381,10 +372,9 @@ public:
 	}
 };
 
-GPUProgram gpuProgram; // vertex and fragment shaders
+GPUProgram gpuProgram; 
 Scene scene;
 
-// vertex shader in GLSL
 const char* vertexSource = R"(
 	#version 330
     precision highp float;
@@ -398,7 +388,6 @@ const char* vertexSource = R"(
 	}
 )";
 
-// fragment shader in GLSL
 const char* fragmentSource = R"(
 	#version 330
     precision highp float;
@@ -413,7 +402,7 @@ const char* fragmentSource = R"(
 )";
 
 class FullScreenTexturedQuad {
-	unsigned int vao;	// vertex array object id and texture id
+	unsigned int vao;
 	
 	int windowWidth, windowHeight;
 public:
@@ -421,25 +410,22 @@ public:
 	{
 		this->windowWidth = windowWidth;
 		this->windowHeight = windowHeight;
-		glGenVertexArrays(1, &vao);	// create 1 vertex array object
-		glBindVertexArray(vao);		// make it active
-
-		unsigned int vbo;		// vertex buffer objects
-		glGenBuffers(1, &vbo);	// Generate 1 vertex buffer objects
-
-		// vertex coordinates: vbo0 -> Attrib Array 0 -> vertexPosition of the vertex shader
-		glBindBuffer(GL_ARRAY_BUFFER, vbo); // make it active, it is an array
-		float vertexCoords[] = { -1, -1,  1, -1,  1, 1,  -1, 1 };	// two triangles forming a quad
-		glBufferData(GL_ARRAY_BUFFER, sizeof(vertexCoords), vertexCoords, GL_STATIC_DRAW);	   // copy to that part of the memory which is not modified 
+		glGenVertexArrays(1, &vao);
+		glBindVertexArray(vao);		
+		unsigned int vbo;		
+		glGenBuffers(1, &vbo);
+		glBindBuffer(GL_ARRAY_BUFFER, vbo); 
+		float vertexCoords[] = { -1, -1,  1, -1,  1, 1,  -1, 1 };	
+		glBufferData(GL_ARRAY_BUFFER, sizeof(vertexCoords), vertexCoords, GL_STATIC_DRAW);	    
 		glEnableVertexAttribArray(0);
-		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, NULL);     // stride and offset: it is tightly packed
+		glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 0, NULL);   
 	}
 
 	void Draw(std::vector<vec4>& image){
 		Texture texture(windowWidth, windowHeight, image);
-		glBindVertexArray(vao);	// make the vao and its vbos active playing the role of the data source
+		glBindVertexArray(vao);
 		gpuProgram.setUniform(texture, "textureUnit");
-		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);	// draw two triangles forming a quad
+		glDrawArrays(GL_TRIANGLE_FAN, 0, 4);
 	}
 };
 
@@ -455,18 +441,14 @@ void onDisplay() {
 	std::vector<vec4> image(windowWidth * windowHeight);
 	scene.render(image);
 	fullScreenTexturedQuad->Draw(image);
-	glutSwapBuffers();									// exchange the two buffers
+	glutSwapBuffers();							
 }
 
 void onKeyboard(unsigned char key, int pX, int pY) {}
 void onKeyboardUp(unsigned char key, int pX, int pY) {}
-void onMouse(int button, int state, int pX, int pY) {
-	if(state == 0) scene.animate(0.1f);
-	
-	glutPostRedisplay();
-}
+void onMouse(int button, int state, int pX, int pY) {}
 void onMouseMotion(int pX, int pY) {}
 void onIdle() {
-	//scene.animate(0.1f);
-	//glutPostRedisplay();
+	scene.animate(0.1f);
+	glutPostRedisplay();
 }
