@@ -9,4 +9,5 @@ Az arany törésmutatója és kioltási tényezője: n/k: 0.17/3.1, 0.35/2.7, 1.
 
 A többi paraméter egyénileg megválasztható, úgy, hogy a kép szép legyen. Az a,b,c pozitív, nem egész számok.
 
-![ezgif com-gif-maker](https://user-images.githubusercontent.com/22593928/147513288-8ea510df-fed3-4837-829b-9a8297a1e296.gif)
+<img src="https://user-images.githubusercontent.com/22593928/147513288-8ea510df-fed3-4837-829b-9a8297a1e296.gif" width="400" height="400"/>
+
